@@ -1,5 +1,8 @@
 from rrcf.rrcf import *
 from rrcf.shingle import shingle
-import pkg_resources
+from importlib.metadata import version, PackageNotFoundError
 
-__version__ = pkg_resources.get_distribution('rrcf').version
+try:
+    __version__ = version("rrcf")
+except PackageNotFoundError:
+    __version__ = "unknown"
