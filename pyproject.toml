@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "rrcf-sse"
+name = "newrrcf"
 version = "0.5.0"
 description = "Robust random cut forest for anomaly detection"
 authors = [

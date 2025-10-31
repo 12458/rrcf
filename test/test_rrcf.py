@@ -1,6 +1,6 @@
 import json
 import numpy as np
-import rrcf
+import newrrcf as rrcf
 
 np.random.seed(0)
 n = 100
