@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rrcf"
+version = "0.4.5"
+description = "Robust random cut forest for anomaly detection"
+authors = [
+    {name = "Matt Bartos", email = "mdbartos@umich.edu"},
+    {name = "Abhiram Mullapudi", email = "abhiramm@umich.edu"},
+    {name = "Sara Troutman", email = "stroutm@umich.edu"}
+]
+license = {text = "MIT"}
+dependencies = [
+    "numpy"
+]
+
+[project.urls]
+Homepage = "http://open-storm.org"
+
+[tool.setuptools]
+packages = ["rrcf"]
