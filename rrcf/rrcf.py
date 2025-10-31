@@ -1,3 +1,4 @@
+from typing import Any, Callable, Hashable
 import numpy as np
 
 
@@ -65,8 +66,8 @@ class RCTree:
     >>> tree.forget_point(100)
     """
 
-    def __init__(self, X=None, index_labels=None, precision=9, 
-                 random_state=None):
+    def __init__(self, X: np.ndarray | None = None, index_labels: np.ndarray | None = None,
+                 precision: int = 9, random_state: int | np.random.RandomState | None = None) -> None:
         # Random number generation with provided seed
         if isinstance(random_state, int):
             self.rng = np.random.RandomState(random_state)
@@ -111,13 +112,13 @@ class RCTree:
             # Set bboxes of all branches
             self._get_bbox_top_down(self.root)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         depth = ""
         treestr = ""
 
         def print_push(char):
             nonlocal depth
-            branch_str = ' {}  '.format(char)
+            branch_str = f' {char}  '
             depth += branch_str
 
         def print_pop():
@@ -128,14 +129,14 @@ class RCTree:
             nonlocal depth
             nonlocal treestr
             if isinstance(node, Leaf):
-                treestr += '({})\n'.format(node.i)
+                treestr += f'({node.i})\n'
             elif isinstance(node, Branch):
-                treestr += '{0}{1}\n'.format(chr(9472), '+')
-                treestr += '{0} {1}{2}{2}'.format(depth, chr(9500), chr(9472))
+                treestr += f'{chr(9472)}+\n'
+                treestr += f'{depth} {chr(9500)}{chr(9472)}{chr(9472)}'
                 print_push(chr(9474))
                 print_tree(node.l)
                 print_pop()
-                treestr += '{0} {1}{2}{2}'.format(depth, chr(9492), chr(9472))
+                treestr += f'{depth} {chr(9492)}{chr(9472)}{chr(9472)}'
                 print_push(' ')
                 print_tree(node.r)
                 print_pop()
@@ -217,7 +218,7 @@ class RCTree:
         # Decrement depth as we traverse back up
         depth -= 1
 
-    def map_leaves(self, node, op=(lambda x: None), *args, **kwargs):
+    def map_leaves(self, node: 'Branch | Leaf', op: Callable = (lambda x: None), *args: Any, **kwargs: Any) -> None:
         """
         Traverse tree recursively, calling operation given by op on leaves
 
@@ -258,7 +259,7 @@ class RCTree:
         else:
             op(node, *args, **kwargs)
 
-    def map_branches(self, node, op=(lambda x: None), *args, **kwargs):
+    def map_branches(self, node: 'Branch | Leaf', op: Callable = (lambda x: None), *args: Any, **kwargs: Any) -> None:
         """
         Traverse tree recursively, calling operation given by op on branches
 
@@ -300,7 +301,7 @@ class RCTree:
                 self.map_branches(node.r, op=op, *args, **kwargs)
             op(node, *args, **kwargs)
 
-    def forget_point(self, index):
+    def forget_point(self, index: Hashable) -> 'Leaf':
         """
         Delete leaf from tree
 
@@ -390,7 +391,7 @@ class RCTree:
             node.n += inc
             node = node.u
 
-    def insert_point(self, point, index, tolerance=None):
+    def insert_point(self, point: np.ndarray, index: Hashable, tolerance: float | None = None) -> 'Leaf':
         """
         Inserts a point into the tree, creating a new leaf
 
@@ -471,9 +472,7 @@ class RCTree:
                     parent = node
                     node = node.r
                     side = 'r'
-        try:
-            assert branch is not None
-        except:
+        if branch is None:
             raise AssertionError('Error with program logic: a cut was not found.')
         # Set parent of new leaf and old branch
         node.u = branch
@@ -497,7 +496,7 @@ class RCTree:
         # Return inserted leaf for convenience
         return leaf
 
-    def query(self, point, node=None):
+    def query(self, point: np.ndarray, node: 'Branch | Leaf | None' = None) -> 'Leaf':
         """
         Search for leaf nearest to point
 
@@ -535,7 +534,7 @@ class RCTree:
             node = self.root
         return self._query(point, node)
 
-    def disp(self, leaf):
+    def disp(self, leaf: Hashable | 'Leaf') -> int:
         """
         Compute displacement at leaf
 
@@ -580,7 +579,7 @@ class RCTree:
         displacement = sibling.n
         return displacement
 
-    def codisp(self, leaf):
+    def codisp(self, leaf: Hashable | 'Leaf') -> float:
         """
         Compute collusive displacement at leaf
 
@@ -632,7 +631,7 @@ class RCTree:
         return co_displacement
 
 
-    def codisp_with_cut_dimension(self, leaf):
+    def codisp_with_cut_dimension(self, leaf: Hashable | 'Leaf') -> tuple[float, int]:
         """
         Compute collusive displacement at leaf and the dimension of the cut.
         This method can be used to find the most importance fetures that determined the CoDisp.
@@ -692,7 +691,7 @@ class RCTree:
         
         return results[argmax], cut_dimensions[argmax]
 
-    def get_bbox(self, branch=None):
+    def get_bbox(self, branch: 'Branch | None' = None) -> np.ndarray:
         """
         Compute bounding box of all points underneath a given branch.
 
@@ -724,7 +723,7 @@ class RCTree:
         bbox = np.vstack([mins, maxes])
         return bbox
 
-    def find_duplicate(self, point, tolerance=None):
+    def find_duplicate(self, point: np.ndarray, tolerance: float | None = None) -> 'Leaf | None':
         """
         If point is a duplicate of existing point in the tree, return the leaf
         containing the point, else return None.
@@ -769,7 +768,7 @@ class RCTree:
                 return nearest
         return None
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes RCTree to a nested dict that can be written to disk or sent
         over a network (e.g. as json).
@@ -1134,7 +1133,9 @@ class Branch:
     """
     __slots__ = ['q', 'p', 'l', 'r', 'u', 'n', 'b']
 
-    def __init__(self, q, p, l=None, r=None, u=None, n=0, b=None):
+    def __init__(self, q: int | None, p: float | None, l: 'Branch | Leaf | None' = None,
+                 r: 'Branch | Leaf | None' = None, u: 'Branch | None' = None,
+                 n: int = 0, b: np.ndarray | None = None) -> None:
         self.l = l
         self.r = r
         self.u = u
@@ -1143,8 +1144,8 @@ class Branch:
         self.n = n
         self.b = b
 
-    def __repr__(self):
-        return "Branch(q={}, p={:.2f})".format(self.q, self.p)
+    def __repr__(self) -> str:
+        return f"Branch(q={self.q}, p={self.p:.2f})"
 
 
 class Leaf:
@@ -1162,7 +1163,8 @@ class Leaf:
     """
     __slots__ = ['i', 'd', 'u', 'x', 'n', 'b']
 
-    def __init__(self, i, d=None, u=None, x=None, n=1):
+    def __init__(self, i: Hashable, d: int | None = None, u: 'Branch | None' = None,
+                 x: np.ndarray | None = None, n: int = 1) -> None:
         self.u = u
         self.i = i
         self.d = d
@@ -1170,5 +1172,5 @@ class Leaf:
         self.n = n
         self.b = x.reshape(1, -1)
 
-    def __repr__(self):
-        return "Leaf({0})".format(self.i)
+    def __repr__(self) -> str:
+        return f"Leaf({self.i})"

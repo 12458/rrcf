@@ -1,8 +1,9 @@
 from collections import deque
+from collections.abc import Iterable, Generator
 import numpy as np
 
 
-def shingle(sequence, size):
+def shingle(sequence: Iterable, size: int) -> Generator[np.ndarray, None, None]:
     """
     Generator that yields shingles (a rolling window) of a given size.
 
