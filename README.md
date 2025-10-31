@@ -178,7 +178,7 @@ for tree in forest:
 avg_codisp /= index
 ```
 
-![Image](https://github.com/kLabUM/rrcf/blob/master/resources/batch.png)
+![Image](https://github.com/12458/rrcf/blob/master/resources/batch.png)
 
 ## Streaming anomaly detection
 
@@ -230,7 +230,7 @@ for index, point in enumerate(points):
         avg_codisp[index] += tree.codisp(index) / num_trees
 ```
 
-![Image](https://github.com/kLabUM/rrcf/blob/master/resources/sine.png)
+![Image](https://github.com/12458/rrcf/blob/master/resources/sine.png)
 
 ## Obtain feature importance
 
@@ -285,7 +285,7 @@ feature_importance_anomaly = np.mean(dim_codisp[avg_codisp>50,:],axis=0)
 df_feature_importance = pd.DataFrame(feature_importance_anomaly,columns=['feature_importance'])
 df_feature_importance
 ```
-![Image](https://raw.githubusercontent.com/kLabUM/rrcf/master/feature_importance.png)
+![Image](https://raw.githubusercontent.com/12458/rrcf/master/feature_importance.png)
 
 
 
