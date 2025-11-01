@@ -446,10 +446,11 @@ class RCTree:
         # If tree has points and point is not a duplicate, continue with main algorithm...
         node = self.root
         parent = node.u
-        maxdepth = max([leaf.d for leaf in self.leaves.values()])
         depth = 0
         branch = None
-        for _ in range(maxdepth + 1):
+        side = None
+        # Traverse tree until we find where to insert the point
+        while isinstance(node, Branch):
             bbox = node.b
             cut_dimension, cut = self._insert_point_cut(point, bbox)
             if cut <= bbox[0, cut_dimension]:
@@ -464,16 +465,26 @@ class RCTree:
                 break
             else:
                 depth += 1
+                parent = node
                 if point[node.q] <= node.p:
-                    parent = node
                     node = node.l
                     side = 'l'
                 else:
-                    parent = node
                     node = node.r
                     side = 'r'
+        # If branch is None, traversal reached a Leaf - need to split it
         if branch is None:
-            raise AssertionError('Error with program logic: a cut was not found.')
+            bbox = node.b
+            cut_dimension, cut = self._insert_point_cut(point, bbox)
+            leaf = Leaf(x=point, i=index, d=depth)
+            if cut <= bbox[0, cut_dimension]:
+                branch = Branch(q=cut_dimension, p=cut, l=leaf, r=node,
+                                n=(leaf.n + node.n))
+            elif cut >= bbox[-1, cut_dimension]:
+                branch = Branch(q=cut_dimension, p=cut, l=node, r=leaf,
+                                n=(leaf.n + node.n))
+            else:
+                raise AssertionError('Error with program logic: cut should be outside leaf bbox')
         # Set parent of new leaf and old branch
         node.u = branch
         leaf.u = branch
