@@ -679,10 +679,10 @@ class RCTree:
                     'leaf must be a Leaf instance or key to self.leaves')
         # Handle case where leaf is root
         if leaf is self.root:
-            return 0
+            return 0.0, 0
         node = leaf
-        results = []
-        cut_dimensions = []
+        max_codisp = 0.0
+        max_cut_dim = 0
 
         for _ in range(node.d):
             parent = node.u
@@ -694,13 +694,16 @@ class RCTree:
                 sibling = parent.l
             num_deleted = node.n
             displacement = sibling.n
-            result = (displacement / num_deleted)
-            results.append(result)
-            cut_dimensions.append(parent.q)
+            result = displacement / num_deleted
+
+            # Track maximum during iteration
+            if result > max_codisp:
+                max_codisp = result
+                max_cut_dim = parent.q
+
             node = parent
-        argmax = np.argmax(results)
-        
-        return results[argmax], cut_dimensions[argmax]
+
+        return max_codisp, max_cut_dim
 
     def get_bbox(self, branch: 'Branch | None' = None) -> np.ndarray:
         """
