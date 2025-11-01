@@ -18,7 +18,7 @@ def shingle(sequence: Iterable, size: int) -> Generator[np.ndarray, None, None]:
     init = (next(iterator) for _ in range(size))
     window = deque(init, maxlen=size)
     if len(window) < size:
-        raise IndexError('Sequence smaller than window size')
+        raise IndexError("Sequence smaller than window size")
     yield np.asarray(window)
     for elem in iterator:
         window.append(elem)

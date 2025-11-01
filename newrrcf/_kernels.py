@@ -11,7 +11,9 @@ from numba import jit
 
 
 @jit(nopython=True, cache=True)
-def compute_min_max_over_mask(X: np.ndarray, S: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def compute_min_max_over_mask(
+    X: np.ndarray, S: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Compute min and max over masked array efficiently.
 
@@ -75,8 +77,12 @@ def compute_cut_probabilities(xmin: np.ndarray, xmax: np.ndarray) -> np.ndarray:
 
 
 @jit(nopython=True, cache=True)
-def compute_lr_bbox(bbox_l_min: np.ndarray, bbox_l_max: np.ndarray,
-                    bbox_r_min: np.ndarray, bbox_r_max: np.ndarray) -> np.ndarray:
+def compute_lr_bbox(
+    bbox_l_min: np.ndarray,
+    bbox_l_max: np.ndarray,
+    bbox_r_min: np.ndarray,
+    bbox_r_max: np.ndarray,
+) -> np.ndarray:
     """
     Compute combined bounding box from left and right child bboxes.
 
@@ -103,8 +109,9 @@ def compute_lr_bbox(bbox_l_min: np.ndarray, bbox_l_max: np.ndarray,
 
 
 @jit(nopython=True, cache=True)
-def compute_insert_cut_dimension(bbox_hat_min: np.ndarray, bbox_hat_max: np.ndarray,
-                                  r: float) -> tuple[int, float, np.ndarray]:
+def compute_insert_cut_dimension(
+    bbox_hat_min: np.ndarray, bbox_hat_max: np.ndarray, r: float
+) -> tuple[int, float, np.ndarray]:
     """
     Compute cut dimension and value for point insertion.
 
@@ -143,8 +150,9 @@ def compute_insert_cut_dimension(bbox_hat_min: np.ndarray, bbox_hat_max: np.ndar
 
 
 @jit(nopython=True, cache=True)
-def expand_bbox_for_point(bbox_min: np.ndarray, bbox_max: np.ndarray,
-                          point: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def expand_bbox_for_point(
+    bbox_min: np.ndarray, bbox_max: np.ndarray, point: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Expand bounding box to include a new point.
 
@@ -172,8 +180,12 @@ def expand_bbox_for_point(bbox_min: np.ndarray, bbox_max: np.ndarray,
 
 
 @jit(nopython=True, cache=True)
-def check_bbox_tighten(bbox_min: np.ndarray, bbox_max: np.ndarray,
-                       child_bbox_min: np.ndarray, child_bbox_max: np.ndarray) -> tuple[bool, np.ndarray, np.ndarray]:
+def check_bbox_tighten(
+    bbox_min: np.ndarray,
+    bbox_max: np.ndarray,
+    child_bbox_min: np.ndarray,
+    child_bbox_max: np.ndarray,
+) -> tuple[bool, np.ndarray, np.ndarray]:
     """
     Check if bbox needs tightening and return updated bounds.
 
@@ -208,8 +220,9 @@ def check_bbox_tighten(bbox_min: np.ndarray, bbox_max: np.ndarray,
 
 
 @jit(nopython=True, cache=True)
-def check_bbox_contains_point(bbox_min: np.ndarray, bbox_max: np.ndarray,
-                              point: np.ndarray) -> bool:
+def check_bbox_contains_point(
+    bbox_min: np.ndarray, bbox_max: np.ndarray, point: np.ndarray
+) -> bool:
     """
     Check if a point is on the boundary of a bounding box.
 
@@ -232,8 +245,9 @@ def check_bbox_contains_point(bbox_min: np.ndarray, bbox_max: np.ndarray,
 
 
 @jit(nopython=True, cache=True)
-def update_bbox_elementwise(mins: np.ndarray, maxes: np.ndarray,
-                            point: np.ndarray) -> None:
+def update_bbox_elementwise(
+    mins: np.ndarray, maxes: np.ndarray, point: np.ndarray
+) -> None:
     """
     Update min/max arrays with a point's coordinates (in-place).
 
