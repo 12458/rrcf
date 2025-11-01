@@ -1,6 +1,8 @@
 from typing import Any, Callable, Hashable
 import numpy as np
 
+from . import _kernels
+
 
 class RCTree:
     """
@@ -145,12 +147,10 @@ class RCTree:
         return treestr
 
     def _cut(self, X, S, parent=None, side='l'):
-        # Find max and min over all d dimensions
-        xmax = X[S].max(axis=0)
-        xmin = X[S].min(axis=0)
-        # Compute l
-        l = xmax - xmin
-        l /= l.sum()
+        # Find max and min over all d dimensions using JIT kernel
+        xmin, xmax = _kernels.compute_min_max_over_mask(X, S)
+        # Compute l using JIT kernel
+        l = _kernels.compute_cut_probabilities(xmin, xmax)
         # Determine dimension to cut
         q = self.rng.choice(self.ndim, p=l)
         # Determine value for split
@@ -961,8 +961,9 @@ class RCTree:
         """
         Compute bbox of node based on bboxes of node's children.
         """
-        bbox = np.vstack([np.minimum(node.l.b[0, :], node.r.b[0, :]),
-                          np.maximum(node.l.b[-1, :], node.r.b[-1, :])])
+        # Use JIT kernel for bbox computation
+        bbox = _kernels.compute_lr_bbox(node.l.b[0, :], node.l.b[-1, :],
+                                        node.r.b[0, :], node.r.b[-1, :])
         return bbox
 
     def _get_bbox_top_down(self, node):
@@ -1032,10 +1033,8 @@ class RCTree:
         """
         Primitive function for computing the bbox of a point.
         """
-        lt = (x.x < mins)
-        gt = (x.x > maxes)
-        mins[lt] = x.x[lt]
-        maxes[gt] = x.x[gt]
+        # Use JIT kernel for element-wise bbox update
+        _kernels.update_bbox_elementwise(mins, maxes, x.x)
 
     def _tighten_bbox_upwards(self, node):
         """
@@ -1046,15 +1045,13 @@ class RCTree:
         node.b = bbox
         node = node.u
         while node:
-            lt = (bbox[0, :] < node.b[0, :])
-            gt = (bbox[-1, :] > node.b[-1, :])
-            lt_any = lt.any()
-            gt_any = gt.any()
-            if lt_any or gt_any:
-                if lt_any:
-                    node.b[0, :][lt] = bbox[0, :][lt]
-                if gt_any:
-                    node.b[-1, :][gt] = bbox[-1, :][gt]
+            # Use JIT kernel to check if bbox needs tightening
+            needs_update, new_min, new_max = _kernels.check_bbox_tighten(
+                node.b[0, :], node.b[-1, :], bbox[0, :], bbox[-1, :]
+            )
+            if needs_update:
+                node.b[0, :] = new_min
+                node.b[-1, :] = new_max
             else:
                 break
             node = node.u
@@ -1065,9 +1062,10 @@ class RCTree:
         if the deleted point defined the boundary of the bbox.
         """
         while node:
-            bbox = self._lr_branch_bbox(node)
-            if not ((node.b[0, :] == point) | (node.b[-1, :] == point)).any():
+            # Use JIT kernel to check if point is on bbox boundary
+            if not _kernels.check_bbox_contains_point(node.b[0, :], node.b[-1, :], point):
                 break
+            bbox = self._lr_branch_bbox(node)
             node.b[0, :] = bbox[0, :]
             node.b[-1, :] = bbox[-1, :]
             node = node.u
@@ -1097,23 +1095,19 @@ class RCTree:
 
         (0, 0.9758881798109296)
         """
-        # Generate the bounding box
-        bbox_hat = np.empty((2, bbox.shape[1]))
-        # Update the bounding box based on the internal point
-        bbox_hat[0, :] = np.minimum(bbox[0, :], point)
-        bbox_hat[-1, :] = np.maximum(bbox[-1, :], point)
-        b_span = bbox_hat[-1, :] - bbox_hat[0, :]
-        b_range = b_span.sum()
+        # Use JIT kernel to expand bbox for the new point
+        bbox_hat_min, bbox_hat_max = _kernels.expand_bbox_for_point(
+            bbox[0, :], bbox[-1, :], point
+        )
+        # Compute range and generate random value
+        b_range = (bbox_hat_max - bbox_hat_min).sum()
         r = self.rng.uniform(0, b_range)
-        span_sum = np.cumsum(b_span)
-        cut_dimension = np.inf
-        for j in range(len(span_sum)):
-            if span_sum[j] >= r:
-                cut_dimension = j
-                break
-        if not np.isfinite(cut_dimension):
+        # Use JIT kernel to compute cut dimension and value
+        cut_dimension, cut, span_sum = _kernels.compute_insert_cut_dimension(
+            bbox_hat_min, bbox_hat_max, r
+        )
+        if cut_dimension < 0:
             raise ValueError("Cut dimension is not finite.")
-        cut = bbox_hat[0, cut_dimension] + span_sum[cut_dimension] - r
         return cut_dimension, cut
 
 
